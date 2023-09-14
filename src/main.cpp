@@ -1,13 +1,10 @@
 #include <OpenGLPrj.hpp>
-
 #include <GLFW/glfw3.h>
-
 #include <Shader.hpp>
 #include <Square.h>
 
 #include <iostream>
 #include <string>
-#include <vector>
 using namespace std;
 
 const std::string program_name = ("A* algorithm");
@@ -15,6 +12,9 @@ const std::string program_name = ("A* algorithm");
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void processInput(GLFWwindow *window);
 void makeGrid(::uint32_t, ::uint32_t);
+int heuristicFunction(const Square& m1, const Square& m2);
+void algorithm();
+void updateNeighbours(::uint32_t i, uintptr_t j);
 
 // settings
 const unsigned int SCR_WIDTH = 800;
@@ -23,6 +23,8 @@ const unsigned int SCR_HEIGHT = 800;
 // variables
 uint32_t nr, nc, rows = 20, cols = 20;
 Square m[20][20];
+Square startSquare, endSquare;
+
 bool start = true;
 bool End = true;
 
@@ -66,12 +68,11 @@ int main() {
     std::string shader_location("../res/shaders/");
 
     std::string used_shaders("shader");
-
     Shader ourShader(shader_location + used_shaders + std::string(".vert"),
                      shader_location + used_shaders + std::string(".frag"));
 
-    std::string used_shader2("shaderStart");
 
+    std::string used_shader2("shaderStart");
     Shader startShader(shader_location + used_shader2 + std::string(".vert"),
                  shader_location + used_shader2 + std::string(".frag"));
 
@@ -121,6 +122,7 @@ int main() {
         // -----
         processInput(window);
 
+
         // render
         // ------
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -156,29 +158,44 @@ int main() {
 
                 float xcoord = ((float) m[i][j].x / nr - 1.18f);
                 float ycoord = 2.18-( (float) m[i][j].y / nc + 1.0f);
-                //std::cout << i <<',' << j << ":" << xcoord <<" , " << ycoord << '\n';
+
 
                 model = glm::translate(model, glm::vec3(xcoord, ycoord, 0.0f));
-
                 ourShader.setMat4("model", model);
                 startShader.setMat4("model", model);
 
-
+                glm::vec4 uni;
                 if(m[i][j].sType == SQUARE_TYPE::START) {
                     int st = glGetUniformLocation(startShader.ID, "colorS");
-                    glm::vec4 uni = m[i][j].color();
+                    uni = m[i][j].color();
                     glUniform4f(st, uni.x, uni.y, uni.z, uni.w);
+                    start = false;
+                    startSquare = m[i][j];
                 }
 
-                if(m[i][j].sType == SQUARE_TYPE::END) {
+               if(m[i][j].sType == SQUARE_TYPE::END) {
                     int e = glGetUniformLocation(startShader.ID, "colorE");
-                    glm::vec4 u = m[i][j].color();
-                    glUniform4f(e, u.x, u.y, u.z, u.w);
+                    uni = m[i][j].color();
+                    glUniform4f(e, uni.x, uni.y, uni.z, uni.w);
+                    End = false;
+                    endSquare = m[i][j];
+                }
+
+                if(m[i][j].sType == SQUARE_TYPE::OPEN) {
+                    int e = glGetUniformLocation(ourShader.ID, "open");
+                    uni = m[i][j].color();
+                    glUniform4f(e, uni.x, uni.y, uni.z, uni.w);
+                }
+
+                if(m[i][j].sType == SQUARE_TYPE::CLOSED) {
+                    int e = glGetUniformLocation(ourShader.ID, "close");
+                    uni = m[i][j].color();
+                    glUniform4f(e, uni.x, uni.y, uni.z, uni.w);
                 }
 
                 int colorLocation = glGetUniformLocation(ourShader.ID, "color");
-                glm::vec4 uni2 = m[i][j].color();
-                glUniform4f(colorLocation, uni2.x , uni2.y, uni2.z, uni2.w);
+                uni = m[i][j].color();
+                glUniform4f(colorLocation, uni.x , uni.y, uni.z, uni.w);
 
                 glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
@@ -205,6 +222,7 @@ int main() {
     return 0;
 }
 
+
 // process all input: query GLFW whether relevant keys are pressed/released this
 // frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------
@@ -212,31 +230,39 @@ int main() {
 void processInput(GLFWwindow *window) {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
-    double xpos,ypos;
+    double xpos, ypos;
 
     int state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
-    if(state == GLFW_PRESS)
-    {
-        glfwGetCursorPos(window, &xpos,&ypos);
-        int x = (int)(xpos / 40.0f);
-        int y = (int)(ypos / 40.0f);
+    if (state == GLFW_PRESS) {
+        glfwGetCursorPos(window, &xpos, &ypos);
+        int x = (int) (xpos / 40.0f);
+        int y = (int) (ypos / 40.0f);
 
-        if(start && m[x][y].sType != SQUARE_TYPE::END) {
+
+        if (start && m[x][y].sType != SQUARE_TYPE::END) {
             m[x][y].sType = SQUARE_TYPE::START;
             start = false;
             return;
         }
-
-        if (End &&  m[x][y].sType != SQUARE_TYPE::START)
-        {
+        if (End && m[x][y].sType != SQUARE_TYPE::START) {
             m[x][y].sType = SQUARE_TYPE::END;
             End = false;
             return;
         }
 
-        if( !start && !End )
-         m[x][y].sType = SQUARE_TYPE::BARRIER;
+        if (m[x][y].sType != SQUARE_TYPE::START && m[x][y].sType != SQUARE_TYPE::END)
+            m[x][y].sType = SQUARE_TYPE::BARRIER;
 
+    }
+
+
+    int startAlgorithm = glfwGetKey(window, GLFW_KEY_SPACE);
+    if (startAlgorithm == GLFW_PRESS && !start && !End)
+    {
+        algorithm();
+    }
+    else if (startAlgorithm == GLFW_PRESS){
+        cout<<"Add start and end position"<<endl;
     }
 
 }
@@ -258,3 +284,105 @@ void makeGrid(::uint32_t rows, ::uint32_t cols) {
         }
     }
 }
+
+// --------------------------------------------------------------------------------------------
+//                             MANHATTAN HEURISTIC FUNCTION
+
+int heuristicFunction(const Square& m1, const Square& m2)
+{
+    float x1 = m1.x, y1 = m1.y;
+    float x2 = m2.x, y2 = m2.y;
+    return abs(x1-x2) + abs(y1-y2);
+}
+
+// -------------------------------------------------------------------------------------------
+//                                       NEIGHBOURS
+void updateNeighbours(::uint32_t i, ::uint32_t j)
+{
+    if (i < 20 && m[i+1][j].sType != SQUARE_TYPE::BARRIER)      // DOWN
+        m[i+1][j].sType == SQUARE_TYPE::OPEN;
+
+    if(i  > 0 && m[i-1][j].sType != SQUARE_TYPE::BARRIER)      // UP
+       m[i-1][j].sType == SQUARE_TYPE::OPEN;
+
+    if (j < 20 && m[i][j+1].sType != SQUARE_TYPE::BARRIER)    // RIGHT
+        m[i][j+1].sType == SQUARE_TYPE::OPEN;
+
+    if(j > 0 && m[i][j-1].sType != SQUARE_TYPE::BARRIER)     // LEFT
+        m[i][j-1].sType == SQUARE_TYPE::OPEN;
+
+}
+
+// ------------------------------------------------------------------------------------------
+//                                       ALGORITHM
+void algorithm()
+{
+    // fscore, cnt, start - node
+    // cameFrom - keep track of the path
+    // g-_score = {} - dicationary comprenhension
+    // gscore(start) && fscore(start) = h(start.getPost, end.getPos)
+    // openSetHash - we need to check if smth is in the priority queue
+
+    int cnt = 0; // when we inserted the squares into the queue
+    priority_queue<std::tuple<int,int,Square*>> openSet;
+    openSet.emplace(0,cnt, &startSquare);
+
+    unordered_map<Square*, Square*> cameFrom;
+    unordered_map<Square*, int> gScore;
+    unordered_map<Square*, int> fScore;
+    unordered_set<Square*> openSetHASH;
+
+    for(auto& row : m){
+        for (auto& square: row) {
+            gScore[&square] = INT_MAX;
+            fScore[&square] = INT_MAX;
+        }
+    }
+
+    gScore[&startSquare] = 0;
+    fScore[&startSquare] = heuristicFunction(startSquare, endSquare);
+    openSetHASH.insert(&startSquare);
+
+    while(!openSetHASH.empty()){
+        Square* current = get<2>(openSet.top());
+        openSet.pop();
+        openSetHASH.erase(current);
+
+        if(current == &endSquare)
+        {
+            // todo
+        }
+
+        updateNeighbours(current->x, current->y);
+        for(Square neighbour: current->neighbours){
+            int tmpGscore = gScore[current] + 1;
+
+            gScore[&neighbour] = 1000;
+
+            if(tmpGscore < gScore[&neighbour]){
+                cameFrom[&neighbour] = current;
+                gScore[&neighbour] = tmpGscore;
+                fScore[&neighbour] = tmpGscore + heuristicFunction(neighbour,endSquare);
+
+                if(openSetHASH.find(&neighbour) == openSetHASH.end()){
+                    cnt++;
+                    openSet.emplace(fScore[&neighbour],cnt,&neighbour);
+                    openSetHASH.insert(&neighbour);
+                }
+            }
+        }
+
+        if(current != &startSquare)
+            current->sType = SQUARE_TYPE::CLOSED;
+
+    }
+
+}
+
+
+
+
+
+
+
+

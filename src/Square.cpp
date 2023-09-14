@@ -9,6 +9,7 @@ Square::Square(uint32_t r, uint32_t c, SQUARE_TYPE t){
     this->x = r;
     this->y = c;
     this->sType = t;
+    this->f_score = 0;
 }
 Square::~Square() {}
 
@@ -25,12 +26,9 @@ glm::vec4 Square::color() {
         return glm::vec4 (1.0f,0.0f,0.0f,1.0f); // closed set
     else if (sType == OPEN)
         return glm::vec4 (0.0f,1.0f,1.0f,1.0f); //open set
-    else
+    else if (sType == PATH)
         return glm::vec4 (1.0f,0.0f,1.0f,1.0f); // path
-
-
 }
-
 
 
 
