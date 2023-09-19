@@ -5,11 +5,14 @@
 #include <Square.h>
 
 Square::Square() {}
-Square::Square(uint32_t r, uint32_t c, SQUARE_TYPE t){
+Square::Square(int32_t r, int32_t c, SQUARE_TYPE t){
     this->x = r;
     this->y = c;
     this->sType = t;
-    this->f_score = 0;
+    this->fScore = FLT_MAX;
+    this->gScore = FLT_MAX;
+    this->parentY = -1;
+    this->parentX = -1;
 }
 Square::~Square() {}
 
@@ -22,12 +25,12 @@ glm::vec4 Square::color() {
         return glm::vec4 (0.2f,0.2f,1.0f,1.0f); //end point
     else if(sType == BARRIER)
         return glm::vec4 (0.0f,0.0f,0.0f,1.0f); // barrier
-    else if(sType == CLOSED)
-        return glm::vec4 (1.0f,0.0f,0.0f,1.0f); // closed set
-    else if (sType == OPEN)
-        return glm::vec4 (0.0f,1.0f,1.0f,1.0f); //open set
     else if (sType == PATH)
         return glm::vec4 (1.0f,0.0f,1.0f,1.0f); // path
+}
+
+bool Square::operator < (const Square &other) const {
+    return this->fScore < other.fScore;
 }
 
 

@@ -5,20 +5,30 @@
 
 #include <iostream>
 #include <string>
+#include <list>
+#include <queue>
+
 using namespace std;
 
 const std::string program_name = ("A* algorithm");
 
-void framebuffer_size_callback(GLFWwindow *window, int width, int height);
-void processInput(GLFWwindow *window);
-void makeGrid(::uint32_t, ::uint32_t);
-int heuristicFunction(const Square& m1, const Square& m2);
-void algorithm();
-void updateNeighbours(::uint32_t i, uintptr_t j);
-
-// settings
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 800;
+
+
+//----------------------------------------------------------------------------------------------------------------------
+//                                                 FUNCTIONS
+
+void framebuffer_size_callback(GLFWwindow *window, int width, int height);
+void processInput(GLFWwindow *window);
+void makeGrid(::int32_t, ::int32_t);
+float heuristicFunction(const Square& m1, const Square& m2);
+bool algorithm();
+void makePath(::int32_t x, ::int32_t y);
+bool aStar();
+
+// settings
+
 
 // variables
 uint32_t nr, nc, rows = 20, cols = 20;
@@ -28,6 +38,14 @@ Square startSquare, endSquare;
 bool start = true;
 bool End = true;
 
+struct CompareSquare {
+    bool operator()(const Square& a, const Square& b) const {
+        if (a.fScore == b.fScore) {
+            return a.gScore > b.gScore; // Reverse order for gScore
+        }
+        return a.fScore > b.fScore;
+    }
+};
 
 int main() {
     // glfw: initialize and configure
@@ -47,6 +65,7 @@ int main() {
     // --------------------
     GLFWwindow *window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT,
                                           program_name.c_str(), nullptr, nullptr);
+
     if (window == nullptr) {
         std::cout << "Failed to create GLFW window" << std::endl;
         glfwTerminate();
@@ -61,10 +80,8 @@ int main() {
         std::cout << "Failed to initialize GLAD" << std::endl;
         return -1;
     }
-
-    // build and compile our shader program
-    // ------------------------------------
-
+    //--------------------------------------------------------------------------------------------------
+    //
     std::string shader_location("../res/shaders/");
 
     std::string used_shaders("shader");
@@ -74,7 +91,7 @@ int main() {
 
     std::string used_shader2("shaderStart");
     Shader startShader(shader_location + used_shader2 + std::string(".vert"),
-                 shader_location + used_shader2 + std::string(".frag"));
+                       shader_location + used_shader2 + std::string(".frag"));
 
     ////////////////////////////////////////////////////////////////////////////////////
 
@@ -173,7 +190,7 @@ int main() {
                     startSquare = m[i][j];
                 }
 
-               if(m[i][j].sType == SQUARE_TYPE::END) {
+                if(m[i][j].sType == SQUARE_TYPE::END) {
                     int e = glGetUniformLocation(startShader.ID, "colorE");
                     uni = m[i][j].color();
                     glUniform4f(e, uni.x, uni.y, uni.z, uni.w);
@@ -181,17 +198,12 @@ int main() {
                     endSquare = m[i][j];
                 }
 
-                if(m[i][j].sType == SQUARE_TYPE::OPEN) {
+                if(m[i][j].sType == SQUARE_TYPE::PATH) {
                     int e = glGetUniformLocation(ourShader.ID, "open");
                     uni = m[i][j].color();
                     glUniform4f(e, uni.x, uni.y, uni.z, uni.w);
                 }
 
-                if(m[i][j].sType == SQUARE_TYPE::CLOSED) {
-                    int e = glGetUniformLocation(ourShader.ID, "close");
-                    uni = m[i][j].color();
-                    glUniform4f(e, uni.x, uni.y, uni.z, uni.w);
-                }
 
                 int colorLocation = glGetUniformLocation(ourShader.ID, "color");
                 uni = m[i][j].color();
@@ -201,7 +213,6 @@ int main() {
 
             }
         }
-
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved
         // etc.)
@@ -259,7 +270,7 @@ void processInput(GLFWwindow *window) {
     int startAlgorithm = glfwGetKey(window, GLFW_KEY_SPACE);
     if (startAlgorithm == GLFW_PRESS && !start && !End)
     {
-        algorithm();
+        aStar();
     }
     else if (startAlgorithm == GLFW_PRESS){
         cout<<"Add start and end position"<<endl;
@@ -276,7 +287,10 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
     glViewport(0, 0, width, height);
 }
 
-void makeGrid(::uint32_t rows, ::uint32_t cols) {
+// ---------------------------------------------------------------------------------------------
+//                                      MAKE GRID
+
+void makeGrid(::int32_t rows, ::int32_t cols) {
     for (int i = 0; i < rows; i++) {
         for (int j = 0; j < cols; j++) {
             Square x(i, j, SQUARE_TYPE::NORMAL);
@@ -284,38 +298,20 @@ void makeGrid(::uint32_t rows, ::uint32_t cols) {
         }
     }
 }
-
 // --------------------------------------------------------------------------------------------
 //                             MANHATTAN HEURISTIC FUNCTION
 
-int heuristicFunction(const Square& m1, const Square& m2)
+float heuristicFunction(const Square& m1, const Square& m2)
 {
     float x1 = m1.x, y1 = m1.y;
     float x2 = m2.x, y2 = m2.y;
     return abs(x1-x2) + abs(y1-y2);
 }
 
-// -------------------------------------------------------------------------------------------
-//                                       NEIGHBOURS
-void updateNeighbours(::uint32_t i, ::uint32_t j)
-{
-    if (i < 20 && m[i+1][j].sType != SQUARE_TYPE::BARRIER)      // DOWN
-        m[i+1][j].sType == SQUARE_TYPE::OPEN;
-
-    if(i  > 0 && m[i-1][j].sType != SQUARE_TYPE::BARRIER)      // UP
-       m[i-1][j].sType == SQUARE_TYPE::OPEN;
-
-    if (j < 20 && m[i][j+1].sType != SQUARE_TYPE::BARRIER)    // RIGHT
-        m[i][j+1].sType == SQUARE_TYPE::OPEN;
-
-    if(j > 0 && m[i][j-1].sType != SQUARE_TYPE::BARRIER)     // LEFT
-        m[i][j-1].sType == SQUARE_TYPE::OPEN;
-
-}
-
 // ------------------------------------------------------------------------------------------
 //                                       ALGORITHM
-void algorithm()
+/*
+bool algorithm()
 {
     // fscore, cnt, start - node
     // cameFrom - keep track of the path
@@ -324,8 +320,9 @@ void algorithm()
     // openSetHash - we need to check if smth is in the priority queue
 
     int cnt = 0; // when we inserted the squares into the queue
-    priority_queue<std::tuple<int,int,Square*>> openSet;
-    openSet.emplace(0,cnt, &startSquare);
+//    priority_queue<std::tuple<int, int, Square*>, std::vector<std::tuple<int, int, Square*>>, Compare> openSet;
+
+    openSet.push(std::make_tuple(0,cnt,&startSquare));
 
     unordered_map<Square*, Square*> cameFrom;
     unordered_map<Square*, int> gScore;
@@ -350,24 +347,99 @@ void algorithm()
 
         if(current == &endSquare)
         {
-            // todo
+
+            return true;
         }
 
-        updateNeighbours(current->x, current->y);
-        for(Square neighbour: current->neighbours){
+        int i = current->x, j = current->y;
+//        vector<Square> neighbours = updateNeighbours(current->x, current->y);
+//        for(Square neighbour: neighbours){
+//            int tmpGscore = gScore[current] + 1;
+//            gScore[&neighbour] = 1000;
+//
+//            if(tmpGscore < gScore[&neighbour]){
+//                cameFrom[&neighbour] = current;
+//                gScore[&neighbour] = tmpGscore;
+//                fScore[&neighbour] = tmpGscore + heuristicFunction(neighbour,endSquare);
+//
+//                if(openSetHASH.find(&neighbour) == openSetHASH.end()){
+//                    cnt++;
+//                    openSet.emplace(fScore[&neighbour],cnt,&neighbour);
+//                    openSetHASH.insert(&neighbour);
+//                }
+//            }
+//        }
+
+
+        if (i < 20 && m[i+1][j].sType != SQUARE_TYPE::BARRIER)      // DOWN
+        {
             int tmpGscore = gScore[current] + 1;
 
-            gScore[&neighbour] = 1000;
+            if(tmpGscore < gScore[& m[i + 1][j]]){
+                cameFrom[& m[i+1][j]] = current;
+                gScore[& m[i+1][j]] = tmpGscore;
+                fScore[& m[i+1][j]] = tmpGscore + heuristicFunction( m[i + 1][j],endSquare);
 
-            if(tmpGscore < gScore[&neighbour]){
-                cameFrom[&neighbour] = current;
-                gScore[&neighbour] = tmpGscore;
-                fScore[&neighbour] = tmpGscore + heuristicFunction(neighbour,endSquare);
-
-                if(openSetHASH.find(&neighbour) == openSetHASH.end()){
+                if(openSetHASH.find(& m[i + 1][j]) == openSetHASH.end()){
                     cnt++;
-                    openSet.emplace(fScore[&neighbour],cnt,&neighbour);
-                    openSetHASH.insert(&neighbour);
+                    openSet.push(std::make_tuple(fScore[& m[i + 1][j]],cnt,& m[i + 1][j]));
+                    openSetHASH.insert(& m[i + 1][j]);
+                    m[i + 1][j].sType = SQUARE_TYPE::OPEN;
+                }
+            }
+        }
+        if(i  > 0 && m[i-1][j].sType != SQUARE_TYPE::BARRIER)      // UP
+        {
+            int tmpGscore = gScore[current] + 1;
+
+            if(tmpGscore < gScore[&m[i - 1][j]]){
+                cameFrom[&m[i - 1][j]] = current;
+                gScore[&m[i - 1][j]] = tmpGscore;
+                fScore[&m[i - 1][j]] = tmpGscore + heuristicFunction(m[i - 1][j],endSquare);
+
+                if(openSetHASH.find(&m[i - 1][j]) == openSetHASH.end()){
+                    cnt++;
+                    openSet.emplace(fScore[&m[i - 1][j]],cnt,&m[i - 1][j]);
+                    openSetHASH.insert(&m[i - 1][j]);
+                    m[i - 1][j].sType = SQUARE_TYPE::OPEN;
+                }
+            }
+        }
+
+        if (j < 20 && m[i][j+1].sType != SQUARE_TYPE::BARRIER)    // RIGHT
+        {
+            int tmpGscore = gScore[current] + 1;
+
+            if(tmpGscore < gScore[&m[i][j+1]]){
+                cameFrom[&m[i][j+1]] = current;
+                gScore[&m[i][j+1]] = tmpGscore;
+                fScore[&m[i][j+1]] = tmpGscore + heuristicFunction(m[i][j+1],endSquare);
+
+                if(openSetHASH.find(&m[i][j+1]) == openSetHASH.end()){
+                    cnt++;
+                    openSet.emplace(fScore[&m[i][j+1]],cnt,&m[i][j+1]);
+                    openSetHASH.insert(&m[i][j+1]);
+                    m[i][j+1].sType = SQUARE_TYPE::OPEN;
+                }
+            }
+        }
+
+        if(j > 0 && m[i][j-1].sType != SQUARE_TYPE::BARRIER)     // LEFT
+        {
+
+            int tmpGscore = gScore[current] + 1;
+
+
+            if(tmpGscore < gScore[&m[i][j-1]]){
+                cameFrom[& m[i][j-1]] = current;
+                gScore[& m[i][j-1]] = tmpGscore;
+                fScore[& m[i][j-1]] = tmpGscore + heuristicFunction(m[i][j-1],endSquare);
+
+                if(openSetHASH.find(& m[i][j-1]) == openSetHASH.end()){
+                    cnt++;
+                    openSet.emplace(fScore[& m[i][j-1]],cnt,& m[i][j-1]);
+                    openSetHASH.insert(& m[i][j-1]);
+                    m[i ][j-1].sType = SQUARE_TYPE::OPEN;
                 }
             }
         }
@@ -376,13 +448,107 @@ void algorithm()
             current->sType = SQUARE_TYPE::CLOSED;
 
     }
+    return false;
+}
+*/
 
+void makePath(::int32_t x, ::int32_t y)
+{
+    while( x != startSquare.x || y != startSquare.y)
+    {
+        m[x][y].sType = SQUARE_TYPE::PATH;
+        int tempX = m[x][y].parentX;
+        int tempY = m[x][y].parentY;
+        x = tempX;
+        y = tempY;
+    }
 }
 
+bool aStar(){
+
+    bool closedList[20][20] = {false};
+
+    m[startSquare.x][startSquare.y].fScore = heuristicFunction(startSquare, endSquare);
+    m[startSquare.x][startSquare.y].gScore = 0.0;
+
+    std::set<Square> openSet;
+    openSet.insert(m[startSquare.x][startSquare.y]);
+
+    while (!openSet.empty())
+    {
+        Square current = *openSet.begin();
+        openSet.erase(*openSet.begin());
+
+        ::int32_t i = current.x, j = current.y;
+
+        if(i == endSquare.x && j == endSquare.y) {
+            makePath(current.x,current.y);
+            m[endSquare.x][endSquare.y].sType = SQUARE_TYPE::END;
+            return true;
+        }
+
+        closedList[i][j] = true;
+        float tmpGscore = current.gScore + 1.0;
+
+        if (i < 20 && m[i + 1][j].sType != SQUARE_TYPE::BARRIER && !closedList[i + 1][j])      // DOWN
+        {
+            float fNew =  tmpGscore + heuristicFunction(m[i+1][j],endSquare);
+
+            if(m[i+1][j].fScore == FLT_MAX || m[i+1][j].fScore > fNew){
+                m[i+1][j].parentX = i;
+                m[i+1][j].parentY = j;
+
+                m[i+1][j].gScore = tmpGscore;
+                m[i+1][j].fScore = fNew;
+
+                openSet.insert(m[i+1][j]);
+            }
+        }
 
 
+        if(i > 0 && m[i-1][j].sType != SQUARE_TYPE::BARRIER && !closedList[i - 1][j]){    // UP
+            float fNew =  tmpGscore + heuristicFunction(m[i-1][j],endSquare);
 
+            if(m[i-1][j].fScore == FLT_MAX || m[i-1][j].fScore > fNew)
+            {
+                m[i-1][j].parentX = i;
+                m[i-1][j].parentY = j;
 
+                m[i-1][j].gScore = tmpGscore;
+                m[i-1][j].fScore = fNew;
 
+                openSet.insert(m[i-1][j]);
+            }
+        }
 
+        if (j < 20 && m[i][j+1].sType != SQUARE_TYPE::BARRIER && !closedList[i][j+1]){
+            float fNew =  tmpGscore + heuristicFunction(m[i][j+1],endSquare);
 
+            if(m[i][j+1].fScore == FLT_MAX || m[i][j+1].fScore > fNew) {
+                m[i][j + 1].parentX = i;
+                m[i][j + 1].parentY = j;
+
+                m[i][j + 1].gScore = tmpGscore;
+                m[i][j + 1].fScore = fNew;
+
+                openSet.insert(m[i][j+1]);
+            }
+       }
+
+        if(j > 0 && m[i][j-1].sType != SQUARE_TYPE::BARRIER && !closedList[i][j-1]){
+            float fNew =  tmpGscore + heuristicFunction(m[i][j-1],endSquare);
+
+            if(m[i][j-1].fScore == FLT_MAX || m[i][j-1].fScore > fNew){
+                m[i][j-1].parentX = i;
+                m[i][j-1].parentY = j;
+
+                m[i][j-1].gScore = tmpGscore;
+                m[i][j-1].fScore = fNew;
+
+                openSet.insert(m[i][j-1]);
+            }
+        }
+    }
+
+    return false;
+}

@@ -10,25 +10,26 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <iostream>
-#include <queue>
+#include <set>
 #include <vector>
 #include <unordered_map>
 #include <unordered_set>
 
-enum SQUARE_TYPE { NORMAL, OPEN, CLOSED, BARRIER, START, END, PATH };
+enum SQUARE_TYPE { NORMAL, BARRIER, START, END, PATH };
 
 class Square{
 public:
     SQUARE_TYPE sType;
-    uint32_t x, y;
-    std::vector<Square> neighbours;
-    int f_score;
+    int32_t x, y;
+    int32_t parentX, parentY;
+    float fScore, gScore;
 
     Square();
-    Square(uint32_t , uint32_t , SQUARE_TYPE);
+    Square(int32_t , int32_t , SQUARE_TYPE);
     ~Square();
 
     glm::vec4 color();
+    bool operator < (const Square &other) const;
 };
 
 
