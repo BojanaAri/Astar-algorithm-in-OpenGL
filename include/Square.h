@@ -22,7 +22,7 @@ public:
     SQUARE_TYPE sType;
     int32_t x, y;
     int32_t parentX, parentY;
-    float fScore, gScore;
+    int fScore, gScore, insertionOrder;
 
     Square();
     Square(int32_t , int32_t , SQUARE_TYPE);
