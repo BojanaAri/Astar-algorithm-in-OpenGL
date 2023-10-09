@@ -26,6 +26,11 @@ glm::mat4 Camera::GetViewMatrix() {
   return glm::lookAt(Position, Position + Front, Up);
 }
 
+glm::mat4 Camera::GetProjectionMatrix() {
+    return  glm::perspective(
+            glm::radians(Zoom), 800 * 1.0f / 800, 0.1f, 100.0f);
+}
+
 // Processes input received from any keyboard-like input system. Accepts input
 // parameter in the form of camera defined ENUM (to abstract it from windowing
 // systems)
@@ -51,7 +56,7 @@ void Camera::ProcessMouseMovement(float xoffset, float yoffset,
   Yaw += xoffset;
   Pitch += yoffset;
 
-  // Make sure that when pitch is out of bounds, screen doesn't get flipped
+ //  Make sure that when pitch is out of bounds, screen doesn't get flipped
   if (constrainPitch) {
     if (Pitch > 89.0f)
       Pitch = 89.0f;
@@ -90,4 +95,8 @@ void Camera::updateCameraVectors() {
                         // closer to 0 the more you look up or down which
                         // results in slower movement.
   Up = glm::normalize(glm::cross(Right, Front));
+}
+
+glm::vec3 Camera::getCameraPosition() {
+    return Position;
 }

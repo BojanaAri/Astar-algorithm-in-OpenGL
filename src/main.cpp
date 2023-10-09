@@ -75,11 +75,6 @@ int main() {
     Shader ourShader(shader_location + used_shaders + std::string(".vert"),
                      shader_location + used_shaders + std::string(".frag"));
 
-
-    std::string used_shader2("shaderStart");
-    Shader startShader(shader_location + used_shader2 + std::string(".vert"),
-                       shader_location + used_shader2 + std::string(".frag"));
-
     ////////////////////////////////////////////////////////////////////////////////////
 
     // set up vertex data (and buffer(s)) and configure vertex attributes
@@ -134,7 +129,6 @@ int main() {
 
         //| GL_DEPTH_BUFFER_BIT activate shader
         ourShader.use();
-        startShader.use();
 
         // create transformations
         glm::mat4 view = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
@@ -143,13 +137,9 @@ int main() {
         view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
 
 
-
         // pass transformation matrices to the shader
         ourShader.setMat4("projection",projection); // note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
         ourShader.setMat4("view", view);
-
-        startShader.setMat4("projection",projection);
-        startShader.setMat4("view", view);
 
         // render boxes
         glBindVertexArray(VAO);
@@ -166,11 +156,10 @@ int main() {
 
                 model = glm::translate(model, glm::vec3(xcoord, ycoord, 0.0f));
                 ourShader.setMat4("model", model);
-                startShader.setMat4("model", model);
 
                 glm::vec4 uni;
                 if(m[i][j].sType == SQUARE_TYPE::START) {
-                    int st = glGetUniformLocation(startShader.ID, "colorS");
+                    int st = glGetUniformLocation(ourShader.ID, "colorS");
                     uni = m[i][j].color();
                     glUniform4f(st, uni.x, uni.y, uni.z, uni.w);
                     start = false;
@@ -178,7 +167,7 @@ int main() {
                 }
 
                 if(m[i][j].sType == SQUARE_TYPE::END) {
-                    int e = glGetUniformLocation(startShader.ID, "colorE");
+                    int e = glGetUniformLocation(ourShader.ID, "colorE");
                     uni = m[i][j].color();
                     glUniform4f(e, uni.x, uni.y, uni.z, uni.w);
                     End = false;
@@ -249,8 +238,8 @@ void processInput(GLFWwindow *window) {
         }
 
         if (m[x][y].sType != SQUARE_TYPE::START && m[x][y].sType != SQUARE_TYPE::END
-             &&  (x >= 0 && x < 20) && (y >= 0 && y < 20) )
-             m[x][y].sType = SQUARE_TYPE::BARRIER;
+            &&  (x >= 0 && x < 20) && (y >= 0 && y < 20) )
+            m[x][y].sType = SQUARE_TYPE::BARRIER;
 
     }
 
@@ -348,7 +337,7 @@ bool algorithm()
         closedList[i][j] = true;
         int tmpGscore = current.gScore + 1;
 
-        if (i < 20 && m[i + 1][j].sType != SQUARE_TYPE::BARRIER && !closedList[i + 1][j])      // DOWN
+        if (i < 19 && m[i + 1][j].sType != SQUARE_TYPE::BARRIER && !closedList[i + 1][j])      // DOWN
         {
             int fNew =  tmpGscore + heuristicFunction(m[i+1][j],endSquare);
 
@@ -382,7 +371,7 @@ bool algorithm()
             }
         }
 
-        if (j < 20 && m[i][j+1].sType != SQUARE_TYPE::BARRIER && !closedList[i][j+1]){
+        if (j < 19 && m[i][j+1].sType != SQUARE_TYPE::BARRIER && !closedList[i][j+1]){
             int fNew =  tmpGscore + heuristicFunction(m[i][j+1],endSquare);
 
             if(m[i][j+1].fScore == INT_MAX || m[i][j+1].fScore > fNew) {
@@ -413,7 +402,6 @@ bool algorithm()
                 openList.push(m[i][j-1]);
             }
         }
-
     }
 
     return false;

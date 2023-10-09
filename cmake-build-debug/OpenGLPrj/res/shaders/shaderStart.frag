@@ -1,12 +1,8 @@
 #version 330 core
-out vec4 start;
-out vec4 end;
 
-uniform vec4 colorS;
-uniform vec4 colorE;
+uniform uint objectID;
+out uvec4 FragColor;
 
-void main()
-{
-    start = colorS;
-    end = colorE;
+void main() {
+    FragColor = uvec4(objectID, 0, 0, 0);
 }
