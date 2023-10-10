@@ -10,7 +10,7 @@
 1469	2525	7151741105079915	vendor/glfw/src/CMakeFiles/glfw.dir/win32_joystick.c.obj	c7e6344eed0f44c5
 2139	3253	7151741112346323	vendor/glfw/src/CMakeFiles/glfw.dir/window.c.obj	cca0bb2ebf3404a8
 2389	3399	7151741113849793	vendor/glfw/src/CMakeFiles/glfw.dir/win32_init.c.obj	ccfd8b2497884645
-8	2785	7185762491382063	CMakeFiles/OpenGLPrj.dir/src/main.cpp.obj	c89ab26ff11dbe92
+6	3241	7186801350195914	CMakeFiles/OpenGLPrj.dir/src/main.cpp.obj	c89ab26ff11dbe92
 2517	3521	7151741115064814	vendor/glfw/src/CMakeFiles/glfw.dir/win32_thread.c.obj	3a67dc2878e651ad
 2525	3508	7151741114933373	vendor/glfw/src/CMakeFiles/glfw.dir/win32_monitor.c.obj	3a36bd2274089ee0
 2659	3697	7151741116829669	vendor/glfw/src/CMakeFiles/glfw.dir/win32_window.c.obj	5809e4403f9899f1
@@ -18,7 +18,11 @@
 3400	4251	7151741122374610	vendor/glfw/src/CMakeFiles/glfw.dir/egl_context.c.obj	818b5100df9f5700
 3465	4254	7151741122404511	vendor/glfw/src/CMakeFiles/glfw.dir/wgl_context.c.obj	9981f2c58a36feb
 3508	4275	7151741122618651	vendor/glfw/src/CMakeFiles/glfw.dir/osmesa_context.c.obj	eb2f34b2b892335b
-2089	2326	7185749095740229	OpenGLPrj/bin/OpenGLPrj.exe	1ee6b42f6458afd4
-12	1340	7184720301518813	CMakeFiles/OpenGLPrj.dir/src/Square.cpp.obj	5116e435858b64cb
+3247	3492	7186801352184202	OpenGLPrj/bin/OpenGLPrj.exe	71f705a901bf1e71
+7	2521	7185898112648598	CMakeFiles/OpenGLPrj.dir/src/Square.cpp.obj	5116e435858b64cb
 5	1020	7184742845873750	CMakeFiles/OpenGLPrj.dir/src/Camera.cpp.obj	45a5ebd06c2807fe
-12	414	7185765499324995	build.ninja	f96e374f9503b59a
+1	198	7185765963178469	build.ninja	f96e374f9503b59a
+5	3210	7186801602503751	CMakeFiles/OpenGLPrj.dir/src/main.cpp.obj	c89ab26ff11dbe92
+3212	3487	7186801604682098	OpenGLPrj/bin/OpenGLPrj.exe	71f705a901bf1e71
+4	1951	7186805280451416	CMakeFiles/OpenGLPrj.dir/src/main.cpp.obj	c89ab26ff11dbe92
+1956	2188	7186805282377135	OpenGLPrj/bin/OpenGLPrj.exe	71f705a901bf1e71

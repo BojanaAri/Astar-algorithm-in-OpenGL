@@ -23,7 +23,7 @@ glm::vec4 Square::color() {
     else if(sType == START)
         return glm::vec4 (1.0f,1.0f,0.0f,1.0f); // start point
     else if(sType == END)
-        return glm::vec4 (0.2f,0.2f,1.0f,1.0f); //end point
+        return glm::vec4 (0.2f,0.2f,1.0f,1.0f); // end point
     else if(sType == BARRIER)
         return glm::vec4 (0.0f,0.0f,0.0f,1.0f); // barrier
     else if (sType == PATH)

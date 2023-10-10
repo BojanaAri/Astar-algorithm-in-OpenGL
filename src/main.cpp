@@ -43,7 +43,8 @@ Square startSquare, endSquare;
 bool start = true;
 bool End = true;
 
-// camera
+// -----------------------------------------------------------------------------
+//                                          Camera
 static Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 static float lastX = SCR_WIDTH / 2.0f;
 static float lastY = SCR_HEIGHT / 2.0f;
@@ -52,6 +53,9 @@ static bool firstMouse = true;
 // timing
 static float deltaTime = 0.0f; // time between current frame and last frame
 static float lastFrame = 0.0f;
+
+// lighting
+static glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
 
 
 int main() {
@@ -99,9 +103,18 @@ int main() {
     //
     std::string shader_location("../res/shaders/");
 
+    std::string lamp_shader("lamp");
     std::string used_shaders("shader");
+    std::string path("path");
+
     Shader ourShader(shader_location + used_shaders + std::string(".vert"),
                      shader_location + used_shaders + std::string(".frag"));
+
+    Shader lampShader(shader_location + lamp_shader + std::string(".vert"),
+                      shader_location + lamp_shader + std::string(".frag"));
+
+    Shader pathShader(shader_location + path + std::string(".vert"),
+                shader_location + path + std::string(".frag"));
 
     ////////////////////////////////////////////////////////////////////////////////////
 
@@ -110,44 +123,68 @@ int main() {
 
     ///////////////////
     float vertices[] = {
-            -0.05f, -0.05f, -0.05f,  0.05f,  -0.05f, -0.05f,
-            0.05f,  0.05f,  -0.05f, 0.05f,  0.05f,  -0.05f,
-            -0.05f, 0.05f,  -0.05f, -0.05f, -0.05f, -0.05f,
+            -0.05f, -0.05f, -0.05f, 0.0f,  0.0f,  -1.0f, 0.05f,  -0.05f, -0.05f,
+            0.0f,  0.0f,-1.0f, 0.05f,  0.05f,  -0.05f, 0.0f,  0.0f,  -1.0f,
+            0.05f,0.05f,  -0.05f, 0.0f,  0.0f,-1.0f, -0.05f, 0.05f,  -0.05f,
+            0.0f,  0.0f,  -1.0f,-0.05f, -0.05f, -0.05f, 0.0f,  0.0f,  -1.0f,
 
-            -0.05f, -0.05f, 0.05f,  0.05f,  -0.05f, 0.05f,
-            0.05f,  0.05f,  0.05f,  0.05f,  0.05f,  0.05f,
-            -0.05f, 0.05f,  0.05f,   -0.05f, -0.05f, 0.05f,
+            -0.05f, -0.05f, 0.05f,  0.0f,  0.0f,  1.0f,  0.05f,  -0.05f, 0.05f,
+            0.0f,  0.0f,  1.0f,  0.05f,   0.05f,  0.05f,  0.0f,  0.0f,  1.0f,
+            0.05f,  0.05f,  0.05f,  0.0f,  0.0f,  1.0f,  -0.05f, 0.05f,  0.05f,
+            0.0f,  0.0f,  1.0f,  -0.05f, -0.05f, 0.05f,  0.0f,  0.0f,  1.0f,
 
-            -0.05f, 0.05f,  0.05f,  -0.05f, 0.05f,  -0.05f,
-            -0.05f, -0.05f, -0.05f, -0.05f, -0.05f, -0.05f,
-            -0.05f, -0.05f, 0.05f,  -0.05f, 0.05f,  0.05f,
+            -0.05f, 0.05f,  0.05f,  -1.0f, 0.0f,  0.0f,  -0.05f, 0.05f,  -0.05f,
+            -1.0f, 0.0f,  0.0f,  -0.05f, -0.05f, -0.05f, -1.0f, 0.0f,  0.0f,
+            -0.05f, -0.05f, -0.05f, -1.0f, 0.0f,  0.0f,  -0.05f, -0.05f, 0.05f,
+            -1.0f, 0.0f,  0.0f,  -0.05f, 0.05f,  0.05f,  -1.0f, 0.0f,  0.0f,
 
-            0.05f,  0.05f,  0.05f,  0.05f,  0.05f,  -0.05f,
-            0.05f,  -0.05f, -0.05f, 0.05f,  -0.05f, -0.05f,
-            0.05f,  -0.05f, 0.05f,  0.05f,  0.05f,  0.05f,
+            0.05f,  0.05f,  0.05f,  1.0f,0.0f,  0.0f,  0.05f,  0.05f,  -0.05f,
+            1.0f,  0.0f,  0.0f,  0.05f,  -0.05f, -0.05f, 1.0f,  0.0f,  0.0f,
+            0.05f,  -0.05f, -0.05f, 1.0f,  0.0f,  0.0f,  0.05f,  -0.05f, 0.05f,
+            1.0f,  0.0f,  0.0f,  0.05f,  0.05f,  0.05f,  1.0f,  0.0f,  0.0f,
 
-            -0.05f, -0.05f, -0.05f, 0.05f,  -0.05f, -0.05f,
-            0.05f,  -0.05f, 0.05f,  0.05f,  -0.05f, 0.05f,
-            -0.05f, -0.05f, 0.05f,   -0.05f, -0.05f, -0.05f,
+            -0.05f, -0.05f, -0.05f, 0.0f,  -1.0f, 0.0f,  0.05f,  -0.05f, -0.05f,
+            0.0f,  -1.0f, 0.0f,  0.05f,  -0.05f, 0.05f,  0.0f,  -1.0f, 0.0f,
+            0.05f,  -0.05f, 0.05f,  0.0f,  -1.0f, 0.0f,  -0.05f, -0.05f, 0.05f,
+            0.0f,  -1.0f, 0.0f,  -0.05f, -0.05f, -0.05f, 0.0f,  -1.0f, 0.0f,
 
-            -0.05f, 0.05f,  -0.05f, 0.05f,  0.05f,  -0.05f,
-            0.05f,  0.05f,  0.05f,   0.05f,  0.05f,  0.05f,
-            -0.05f, 0.05f,  0.05f,-0.05f, 0.05f,  -0.05f };
-
+            -0.05f, 0.05f,  -0.05f, 0.0f,  1.0f,  0.0f,  0.05f,  0.05f,  -0.05f,
+            0.0f,  1.0f,  0.0f,  0.05f,  0.05f,  0.05f,  0.0f,  1.0f,  0.0f,
+            0.05f,  0.05f,  0.05f,  0.0f,  1.0f,  0.0f,  -0.05f, 0.05f,  0.05f,
+            0.0f,  1.0f,  0.0f,  -0.05f, 0.05f,  -0.05f, 0.0f,  1.0f,  0.0f};
 
     unsigned int VBO, VAO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
 
-    glBindVertexArray(VAO);
-
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
+
+    glBindVertexArray(VAO);
+
     // position attribute
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float),
-                          static_cast<void *>(nullptr));
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)0);
     glEnableVertexAttribArray(0);
+    // normal attribute
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float),
+                          (void *)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+
+
+
+    // second, configure the light's VAO (VBO stays the same; the vertices are the
+    // same for the light object which is also a 3D cube)
+    unsigned int lightVAO;
+    glGenVertexArrays(1, &lightVAO);
+    glBindVertexArray(lightVAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    // note that we update the lamp's position attribute's stride to reflect the
+    // updated buffer data
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)0);
+    glEnableVertexAttribArray(0);
+
 
     nr = nc = 8;
     makeGrid(rows,cols);
@@ -164,14 +201,24 @@ int main() {
         // input
         // -----
         processInput(window);
+        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        // change the light's position values over time (can be done anywhere in the
+        // render loop actually, but try to do it at least before using the light
+        // source positions)
+        lightPos.x = 1.0f;
+        lightPos.y = 2.0f;
+
+        ourShader.use();
+        ourShader.setVec3("lightPos", lightPos);
+        ourShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
+        ourShader.setVec3("viewPos", camera.Position);
 
         // create transformations
         glm::mat4 projection = camera.GetProjectionMatrix();
         glm::mat4 view = camera.GetViewMatrix();
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        ourShader.use();
         glBindVertexArray(VAO);
 
         ourShader.setMat4("projection",projection);
@@ -204,19 +251,64 @@ int main() {
                 }
 
                 if(m[i][j].sType == SQUARE_TYPE::PATH) {
-                    int e = glGetUniformLocation(ourShader.ID, "open");
-                    uni = m[i][j].color();
-                    glUniform4f(e, uni.x, uni.y, uni.z, uni.w);
+                    pathShader.use();
+
+                    pathShader.setMat4("projection", projection);
+                    pathShader.setMat4("view",view);
+
+                    pathShader.setVec3("light.position", lightPos);
+                    pathShader.setVec3("viewPos", camera.Position);
+
+                    glm::vec3 lightColor;
+                    lightColor.x = static_cast<float>(sin(glfwGetTime() * 2.0));
+                    lightColor.y = static_cast<float>(sin(glfwGetTime() * 0.7));
+                    lightColor.z = static_cast<float>(sin(glfwGetTime() * 1.3));
+                    glm::vec3 diffuseColor =
+                            lightColor * glm::vec3(0.5f); // decrease the influence
+                    glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f); // low influence
+
+                    pathShader.setVec3("light.ambient", ambientColor);
+                    pathShader.setVec3("light.diffuse", diffuseColor);
+                    pathShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
+
+                    pathShader.setVec3("material.ambient", 1.0f, 0.0f, 1.0f);
+                    pathShader.setVec3("material.diffuse", 1.2f, 1.5f, 1.31f);
+                    pathShader.setVec3("material.specular", 0.5f, 0.5f, 0.5f);
+                    pathShader.setFloat("material.shininess", 64.0f);
+
+                    model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.15f));
+
+                    pathShader.setMat4("model",model);
+                    glDrawArrays(GL_TRIANGLES, 0, 36);
+                    continue;
                 }
+
+                ourShader.use();
+                if(m[i][j].sType == SQUARE_TYPE::BARRIER)
+                    model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.15f));
+
 
                 int colorLocation = glGetUniformLocation(ourShader.ID, "color");
                 uni = m[i][j].color();
-                glUniform4f(colorLocation, uni.x , uni.y, uni.z, uni.w);
+                glUniform3f(colorLocation, uni.x , uni.y, uni.z);
 
                 ourShader.setMat4("model", model);
                 glDrawArrays(GL_TRIANGLES, 0, 36);
             }
         }
+
+        // lamp object
+        lampShader.use();
+        lampShader.setMat4("projection", projection);
+        lampShader.setMat4("view", view);
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::translate(model, lightPos);
+        lampShader.setMat4("model", model);
+
+        glBindVertexArray(lightVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+
+
          // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved
         // etc.)
         // -------------------------------------------------------------------------------
@@ -226,7 +318,9 @@ int main() {
     // optional: de-allocate all resources once they've outlived their purpose:
     // ------------------------------------------------------------------------
     glDeleteVertexArrays(1, &VAO);
+    glDeleteVertexArrays(1, &lightVAO);
     glDeleteBuffers(1, &VBO);
+
 
     // glfw: terminate, clearing all previously allocated GLFW resources.
     // ------------------------------------------------------------------
@@ -408,7 +502,7 @@ bool algorithm()
         closedList[i][j] = true;
         int tmpGscore = current.gScore + 1;
 
-        if (i < 19 && m[i + 1][j].sType != SQUARE_TYPE::BARRIER && !closedList[i + 1][j])      // DOWN
+        if (i < 19 && m[i + 1][j].sType != SQUARE_TYPE::BARRIER && !closedList[i + 1][j])      // RIGHT
         {
             int fNew =  tmpGscore + heuristicFunction(m[i+1][j],endSquare);
 
@@ -425,7 +519,7 @@ bool algorithm()
             }
         }
 
-        if(i > 0 && m[i-1][j].sType != SQUARE_TYPE::BARRIER && !closedList[i - 1][j]){    // UP
+        if(i > 0 && m[i-1][j].sType != SQUARE_TYPE::BARRIER && !closedList[i - 1][j]){      // LEFT
             int fNew =  tmpGscore + heuristicFunction(m[i-1][j],endSquare);
 
             if(m[i-1][j].fScore == INT_MAX || m[i-1][j].fScore > fNew)
@@ -442,7 +536,7 @@ bool algorithm()
             }
         }
 
-        if (j < 19 && m[i][j+1].sType != SQUARE_TYPE::BARRIER && !closedList[i][j+1]){
+        if (j < 19 && m[i][j+1].sType != SQUARE_TYPE::BARRIER && !closedList[i][j+1]){      // DOWN
             int fNew =  tmpGscore + heuristicFunction(m[i][j+1],endSquare);
 
             if(m[i][j+1].fScore == INT_MAX || m[i][j+1].fScore > fNew) {
@@ -458,7 +552,7 @@ bool algorithm()
             }
         }
 
-        if(j > 0 && m[i][j-1].sType != SQUARE_TYPE::BARRIER && !closedList[i][j-1]){
+        if(j > 0 && m[i][j-1].sType != SQUARE_TYPE::BARRIER && !closedList[i][j-1]){     // UP
             int fNew =  tmpGscore + heuristicFunction(m[i][j-1],endSquare);
 
             if(m[i][j-1].fScore == INT_MAX || m[i][j-1].fScore > fNew){
