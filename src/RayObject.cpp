@@ -4,8 +4,8 @@
 
 #include "RayObject.h"
 
-RayObject::RayObject() {}
-RayObject::~RayObject() {}
+RayObject::RayObject() = default;
+RayObject::~RayObject() = default;
 
 void RayObject::getRayFromMouse(double xPos, double yPos, unsigned int SCR_WIDTH,unsigned int SCR_HEIGHT, glm::mat4 projectionMatrix, glm::mat4 viewMatrix,
                                 glm::vec3 &rayDirection) {

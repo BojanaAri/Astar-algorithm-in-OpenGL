@@ -339,12 +339,11 @@ void processInput(GLFWwindow *window) {
 
     double xpos, ypos;
     if( glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS){
-        RayObject rayObject = RayObject();
 
         glfwGetCursorPos(window, &xpos, &ypos);
         glm::vec3 rayDirection,rayOrigin;
 
-        rayObject.getRayFromMouse(xpos,SCR_HEIGHT-ypos,
+        RayObject::getRayFromMouse(xpos,SCR_HEIGHT-ypos,
                                     SCR_WIDTH, SCR_HEIGHT,
                                     camera.GetProjectionMatrix(SCR_WIDTH, SCR_HEIGHT),
                                     camera.GetViewMatrix(),
@@ -362,7 +361,7 @@ void processInput(GLFWwindow *window) {
                 glm::mat4 model = glm::mat4(1.0f);
                 model = glm::translate(model, glm::vec3(xcoord, ycoord, 0.0f));
 
-                if(rayObject.testRayOBBIntersection(rayOrigin,
+                if(RayObject::testRayOBBIntersection(rayOrigin,
                                                     rayDirection,
                                                     aabb_min,
                                                     aabb_max,
@@ -377,10 +376,12 @@ void processInput(GLFWwindow *window) {
                         End = false;
                         return;
                     }
-
                     if (m[i][j].sType != SQUARE_TYPE::START && m[i][j].sType != SQUARE_TYPE::END
                         &&  (i >= 0 && i < 20) && (j >= 0 && j < 20) )
                         m[i][j].sType = SQUARE_TYPE::BARRIER;
+
+                    if(glfwGetKey(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS && m[i][j].sType == SQUARE_TYPE::BARRIER)
+                        m[i][j].sType = SQUARE_TYPE::NORMAL;
 
                     break;
                 }

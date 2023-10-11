@@ -13,8 +13,8 @@ class RayObject {
 public:
     RayObject();
     ~RayObject();
-    void getRayFromMouse(double xPos, double yPos, unsigned int SCR_WIDTH,unsigned int SCR_HEIGHT, glm::mat4 projectionMatrix, glm::mat4 viewMatrix, glm::vec3 &rayDirection);
-    bool testRayOBBIntersection(
+    static void getRayFromMouse(double xPos, double yPos, unsigned int SCR_WIDTH,unsigned int SCR_HEIGHT, glm::mat4 projectionMatrix, glm::mat4 viewMatrix, glm::vec3 &rayDirection);
+    static bool testRayOBBIntersection(
             glm::vec3 rayOrigin,        // Ray origin, in world space
             glm::vec3 rayDirection,     // Ray direction (NOT target position!), in world space. Must be normalize()'d.
             glm::vec3 aabb_min,          // Minimum X,Y,Z coords of the mesh when not transformed at all.
