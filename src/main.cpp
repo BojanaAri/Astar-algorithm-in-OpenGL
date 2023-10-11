@@ -261,7 +261,13 @@ void processInput(GLFWwindow *window) {
     else if (startAlgorithm == GLFW_PRESS){
         cout<<"Add start and end position"<<endl;
     }
-
+    // restart the algorithm
+    if(glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS)
+    {
+        makeGrid(rows,cols);
+        start = true;
+        End = true;
+    }
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback

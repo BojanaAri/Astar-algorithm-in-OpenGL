@@ -21,4 +21,8 @@
 2089	2326	7185749095740229	OpenGLPrj/bin/OpenGLPrj.exe	1ee6b42f6458afd4
 12	1340	7184720301518813	CMakeFiles/OpenGLPrj.dir/src/Square.cpp.obj	5116e435858b64cb
 5	1020	7184742845873750	CMakeFiles/OpenGLPrj.dir/src/Camera.cpp.obj	45a5ebd06c2807fe
-12	414	7185765740266325	build.ninja	f96e374f9503b59a
+12	414	7187270078553932	build.ninja	f96e374f9503b59a
+4	1356	7187270248136879	CMakeFiles/OpenGLPrj.dir/src/Camera.cpp.obj	45a5ebd06c2807fe
+20	1539	7187270249970104	CMakeFiles/OpenGLPrj.dir/src/Square.cpp.obj	5116e435858b64cb
+16	2261	7187270257177190	CMakeFiles/OpenGLPrj.dir/src/main.cpp.obj	c89ab26ff11dbe92
+2263	2511	7187270259086339	OpenGLPrj/bin/OpenGLPrj.exe	71f705a901bf1e71
