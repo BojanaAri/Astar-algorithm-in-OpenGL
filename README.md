@@ -9,6 +9,7 @@ the following LEFT mouse clicks - barrier(s).
 If a black barrier square is clicked with the RIGHT mouse button - it deletes the barrier(square).
 
 WHEN clicked SPACE - the algorithm starts & finds the shortest path from the starting to the ending point.
+
 WHEN clicked ENTER - it restarts the grid.
 
 
