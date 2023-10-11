@@ -26,9 +26,9 @@ glm::mat4 Camera::GetViewMatrix() {
   return glm::lookAt(Position, Position + Front, Up);
 }
 
-glm::mat4 Camera::GetProjectionMatrix() {
+glm::mat4 Camera::GetProjectionMatrix(unsigned int SCR_WIDTH,unsigned int SCR_HEIGHT) {
     return  glm::perspective(
-            glm::radians(Zoom), 800 * 1.0f / 800, 0.1f, 100.0f);
+            glm::radians(Zoom), SCR_WIDTH * 1.0f / SCR_HEIGHT, 0.1f, 100.0f);
 }
 
 // Processes input received from any keyboard-like input system. Accepts input
@@ -95,8 +95,4 @@ void Camera::updateCameraVectors() {
                         // closer to 0 the more you look up or down which
                         // results in slower movement.
   Up = glm::normalize(glm::cross(Right, Front));
-}
-
-glm::vec3 Camera::getCameraPosition() {
-    return Position;
 }

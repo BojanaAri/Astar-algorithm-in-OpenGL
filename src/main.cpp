@@ -5,6 +5,7 @@
 #include <Shader.hpp>
 #include <Square.h>
 #include <Camera.hpp>
+#include <RayObject.h>
 
 #include <iostream>
 #include <string>
@@ -17,19 +18,10 @@ const std::string program_name = ("A* algorithm");
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 800;
 
-
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void mouse_callback(GLFWwindow *window, double xpos, double ypos);
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
 void processInput(GLFWwindow *window);
-void getRayFromMouse(double xPos, double yPos, glm::mat4 projectionMatrix, glm::mat4 viewMatrix, glm::vec3 &rayDirection, glm::vec3 &rayOrigin);
-bool testRayOBBIntersection(
-        glm::vec3 rayOrigin,        // Ray origin, in world space
-        glm::vec3 rayDirection,     // Ray direction (NOT target position!), in world space. Must be normalize()'d.
-        glm::vec3 aabb_min,          // Minimum X,Y,Z coords of the mesh when not transformed at all.
-        glm::vec3 aabb_max,          // Maximum X,Y,Z coords. Often aabb_min*-1 if your mesh is centered, but it's not always the case.
-        glm::mat4 modelMatrix      // Transformation applied to the mesh (which will thus be also applied to its bounding box)
-);
 void makeGrid(::int32_t, ::int32_t);
 int heuristicFunction(const Square& m1, const Square& m2);
 void makePath(::int32_t x, ::int32_t y);
@@ -216,7 +208,7 @@ int main() {
         ourShader.setVec3("viewPos", camera.Position);
 
         // create transformations
-        glm::mat4 projection = camera.GetProjectionMatrix();
+        glm::mat4 projection = camera.GetProjectionMatrix(SCR_WIDTH, SCR_HEIGHT);
         glm::mat4 view = camera.GetViewMatrix();
 
         glBindVertexArray(VAO);
@@ -347,13 +339,17 @@ void processInput(GLFWwindow *window) {
 
     double xpos, ypos;
     if( glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS){
+        RayObject rayObject = RayObject();
+
         glfwGetCursorPos(window, &xpos, &ypos);
         glm::vec3 rayDirection,rayOrigin;
 
-        getRayFromMouse(xpos,SCR_HEIGHT-ypos,
-                        camera.GetProjectionMatrix(),
-                        camera.GetViewMatrix(),
-                        rayDirection,rayOrigin);
+        rayObject.getRayFromMouse(xpos,SCR_HEIGHT-ypos,
+                                    SCR_WIDTH, SCR_HEIGHT,
+                                    camera.GetProjectionMatrix(SCR_WIDTH, SCR_HEIGHT),
+                                    camera.GetViewMatrix(),
+                                    rayDirection);
+        rayOrigin = camera.Position;
 
         glm::vec3 aabb_min(-0.05f, -0.05f, -0.05f);
         glm::vec3 aabb_max( 0.05f,  0.05f,  0.05f);
@@ -366,13 +362,11 @@ void processInput(GLFWwindow *window) {
                 glm::mat4 model = glm::mat4(1.0f);
                 model = glm::translate(model, glm::vec3(xcoord, ycoord, 0.0f));
 
-                if(testRayOBBIntersection(
-                        rayOrigin,
-                        rayDirection,
-                        aabb_min,
-                        aabb_max,
-                        model))
-                {
+                if(rayObject.testRayOBBIntersection(rayOrigin,
+                                                    rayDirection,
+                                                    aabb_min,
+                                                    aabb_max,
+                                                    model)){
                     if (start && m[i][j].sType != SQUARE_TYPE::END) {
                         m[i][j].sType = SQUARE_TYPE::START;
                         start = false;
@@ -397,10 +391,19 @@ void processInput(GLFWwindow *window) {
     int startAlgorithm = glfwGetKey(window, GLFW_KEY_SPACE);
     if (startAlgorithm == GLFW_PRESS && !start && !End)
     {
-        algorithm();
+         algorithm();
     }
-    else if (startAlgorithm == GLFW_PRESS){
+    else if (startAlgorithm == GLFW_PRESS)
+    {
         cout<<"Add start and end position"<<endl;
+    }
+
+    // restart the algorithm
+    if(glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS)
+    {
+        makeGrid(rows,cols);
+        start = true;
+        End = true;
     }
 
 }
@@ -570,154 +573,4 @@ bool algorithm()
     }
 
     return false;
-}
-
-void getRayFromMouse(double xPos, double yPos, glm::mat4 projectionMatrix, glm::mat4 viewMatrix, glm::vec3 &rayDirection, glm::vec3 &rayOrigin)
-{
-    // We define the start & end point of the ray that will be casted through the screen
-    glm::vec4 RayPointStart_NDC(
-            ((float)xPos/(float)SCR_WIDTH  - 0.5f) * 2.0f, // [0, 800] -> [-1,1]
-            ((float)yPos/(float)SCR_HEIGHT - 0.5f) * 2.0f, // [0, 800] -> [-1,1]
-            -1.0, // The near plane maps to Z=-1 in Normalized Device Coordinates
-            1.0f);
-
-    glm::vec4 RayPointEnd_NDC(
-            ((float)xPos/(float)SCR_WIDTH  - 0.5f) * 2.0f,
-            ((float)yPos/(float)SCR_HEIGHT - 0.5f) * 2.0f,
-            0.0,
-            1.0f);
-
-    // Inverse (ProjectionMatrix) goes from Clip Space to Camera Space,
-    // While inverse(ViewMatrix) goes from Camera Space to World Space.
-    glm::mat4 inverseProjectionMatrix = glm::inverse(projectionMatrix);
-    glm::mat4 inverseViewMatrix = glm::inverse(viewMatrix);
-
-
-    glm::vec4 RayStartCamera = inverseProjectionMatrix * RayPointStart_NDC;
-    RayStartCamera /= RayStartCamera.w;
-    glm::vec4 RayStartWorld  = inverseViewMatrix * RayStartCamera;
-    RayStartWorld /= RayStartWorld .w;
-
-
-    glm::vec4 RayEndCamera  = inverseProjectionMatrix * RayPointEnd_NDC;
-    RayEndCamera  /= RayEndCamera  .w;
-    glm::vec4 RayEndWorld    = inverseViewMatrix * RayEndCamera;
-    RayEndWorld   /= RayEndWorld   .w;
-
-
-
-    glm::vec3 RayDirectionWorld(RayEndWorld - RayStartWorld);
-    RayDirectionWorld = glm::normalize(RayDirectionWorld);
-
-    rayOrigin = camera.Position;
-    rayDirection = RayDirectionWorld;
-}
-
-bool testRayOBBIntersection(
-        glm::vec3 rayOrigin,           // Ray origin, in world space
-        glm::vec3 rayDirection,       // Ray direction (NOT target position!), in world space. Must be normalize()'d.
-        glm::vec3 aabb_min,           // Minimum X,Y,Z coords of the mesh when not transformed at all.
-        glm::vec3 aabb_max,          // Maximum X,Y,Z coords. Often aabb_min*-1 if your mesh is centered, but it's not always the case.
-        glm::mat4 modelMatrix       // Transformation applied to the mesh (which will thus be also applied to its bounding box)
-){
-    float tMin = 0.0f;
-    float tMax = 100000.0f;
-
-    glm::vec3 OBBposition_worldspace(modelMatrix[3].x, modelMatrix[3].y, modelMatrix[3].z);
-    glm::vec3 delta = OBBposition_worldspace - rayOrigin;
-
-
-    // Test intersection with the 2 planes perpendicular to the OBB's X axis
-    {
-        glm::vec3 xaxis(modelMatrix[0].x, modelMatrix[0].y, modelMatrix[0].z);
-        float e = glm::dot(xaxis, delta);
-        float f = glm::dot(rayDirection, xaxis);
-
-        if ( fabs(f) > 0.001f ){ // Standard case
-
-            float t1 = (e+aabb_min.x)/f; // Intersection with the "left" plane
-            float t2 = (e+aabb_max.x)/f; // Intersection with the "right" plane
-            // t1 and t2 now contain distances betwen ray origin and ray-plane intersections
-
-            // We want t1 to represent the nearest intersection,
-            // so if it's not the case, invert t1 and t2
-            if (t1>t2){
-                float w=t1;t1=t2;t2=w; // swap t1 and t2
-            }
-
-            // tMax is the nearest "far" intersection (amongst the X,Y and Z planes pairs)
-            if ( t2 < tMax )
-                tMax = t2;
-            // tMin is the farthest "near" intersection (amongst the X,Y and Z planes pairs)
-            if ( t1 > tMin )
-                tMin = t1;
-
-            // And here's the trick :
-            // If "far" is closer than "near", then there is NO intersection.
-            // See the images in the tutorials for the visual explanation.
-            if (tMax < tMin )
-                return false;
-
-        }else{ // Rare case : the ray is almost parallel to the planes, so they don't have any "intersection"
-            if(-e+aabb_min.x > 0.0f || -e+aabb_max.x < 0.0f)
-                return false;
-        }
-    }
-
-
-    // Test intersection with the 2 planes perpendicular to the OBB's Y axis
-    // Exactly the same thing than above.
-    {
-        glm::vec3 yaxis(modelMatrix[1].x, modelMatrix[1].y, modelMatrix[1].z);
-        float e = glm::dot(yaxis, delta);
-        float f = glm::dot(rayDirection, yaxis);
-
-        if ( fabs(f) > 0.001f ){
-
-            float t1 = (e+aabb_min.y)/f;
-            float t2 = (e+aabb_max.y)/f;
-
-            if (t1>t2){float w=t1;t1=t2;t2=w;}
-
-            if ( t2 < tMax )
-                tMax = t2;
-            if ( t1 > tMin )
-                tMin = t1;
-            if (tMin > tMax)
-                return false;
-
-        }else{
-            if(-e+aabb_min.y > 0.0f || -e+aabb_max.y < 0.0f)
-                return false;
-        }
-    }
-
-
-    // Test intersection with the 2 planes perpendicular to the OBB's Z axis
-    // Exactly the same thing than above.
-    {
-        glm::vec3 zaxis(modelMatrix[2].x, modelMatrix[2].y, modelMatrix[2].z);
-        float e = glm::dot(zaxis, delta);
-        float f = glm::dot(rayDirection, zaxis);
-
-        if ( fabs(f) > 0.001f ){
-
-            float t1 = (e+aabb_min.z)/f;
-            float t2 = (e+aabb_max.z)/f;
-
-            if (t1>t2){float w=t1;t1=t2;t2=w;}
-
-            if ( t2 < tMax )
-                tMax = t2;
-            if ( t1 > tMin )
-                tMin = t1;
-            if (tMin > tMax)
-                return false;
-
-        }else{
-            if(-e+aabb_min.z > 0.0f || -e+aabb_max.z < 0.0f)
-                return false;
-        }
-    }
-    return true;
 }

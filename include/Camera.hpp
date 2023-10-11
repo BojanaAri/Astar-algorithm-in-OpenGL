@@ -46,9 +46,7 @@ public:
 
   // Returns the view matrix calculated using Euler Angles and the LookAt Matrix
   glm::mat4 GetViewMatrix();
-
-  glm::mat4 GetProjectionMatrix();
-  glm::vec3 getCameraPosition();
+  glm::mat4 GetProjectionMatrix(unsigned int SCR_WIDTH,unsigned int SCR_HEIGHT);
 
   // Processes input received from any keyboard-like input system. Accepts input
   // parameter in the form of camera defined ENUM (to abstract it from windowing
