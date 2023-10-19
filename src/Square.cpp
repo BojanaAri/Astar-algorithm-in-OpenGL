@@ -28,6 +28,10 @@ glm::vec4 Square::color() {
         return glm::vec4 (0.0f,0.0f,0.0f,1.0f); // barrier
     else if (sType == PATH)
         return glm::vec4 (1.0f,0.0f,1.0f,1.0f); // path
+    else if (sType == OPEN_LIST)
+        return glm::vec4 (0.0f,0.5f,1.0f,1.0f);
+    else if (sType == CLOSED_LIST)
+        return glm::vec4 (1.0f,0.0f,0.0f,1.0f);
 }
 
 bool Square::operator < (const Square &other) const {

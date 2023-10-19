@@ -1,9 +1,9 @@
 
-if (NOT EXISTS "C:/Users/Bojana/Desktop/KGproekt/cmake-build-debug/vendor/glfw/install_manifest.txt")
-  message(FATAL_ERROR "Cannot find install manifest: \"C:/Users/Bojana/Desktop/KGproekt/cmake-build-debug/vendor/glfw/install_manifest.txt\"")
+if (NOT EXISTS "C:/Users/Bojana/Desktop/Astar algorithm in OpenGL/cmake-build-debug/vendor/glfw/install_manifest.txt")
+  message(FATAL_ERROR "Cannot find install manifest: \"C:/Users/Bojana/Desktop/Astar algorithm in OpenGL/cmake-build-debug/vendor/glfw/install_manifest.txt\"")
 endif()
 
-file(READ "C:/Users/Bojana/Desktop/KGproekt/cmake-build-debug/vendor/glfw/install_manifest.txt" files)
+file(READ "C:/Users/Bojana/Desktop/Astar algorithm in OpenGL/cmake-build-debug/vendor/glfw/install_manifest.txt" files)
 string(REGEX REPLACE "\n" ";" files "${files}")
 
 foreach (file ${files})

@@ -15,7 +15,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
-enum SQUARE_TYPE { NORMAL, BARRIER, START, END, PATH };
+enum SQUARE_TYPE { NORMAL, BARRIER, START, END, PATH, OPEN_LIST, CLOSED_LIST };
 
 class Square{
 public:

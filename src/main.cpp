@@ -164,7 +164,6 @@ int main() {
     glEnableVertexAttribArray(1);
 
 
-
     // second, configure the light's VAO (VBO stays the same; the vertices are the
     // same for the light object which is also a 3D cube)
     unsigned int lightVAO;
@@ -227,55 +226,14 @@ int main() {
 
                 glm::vec4 uni;
                 if(m[i][j].sType == SQUARE_TYPE::START) {
-                    int st = glGetUniformLocation(ourShader.ID, "colorS");
-                    uni = m[i][j].color();
-                    glUniform4f(st, uni.x, uni.y, uni.z, uni.w);
                     start = false;
                     startSquare = m[i][j];
                 }
 
                 if(m[i][j].sType == SQUARE_TYPE::END) {
-                    int e = glGetUniformLocation(ourShader.ID, "colorE");
-                    uni = m[i][j].color();
-                    glUniform4f(e, uni.x, uni.y, uni.z, uni.w);
                     End = false;
                     endSquare = m[i][j];
                 }
-
-                if(m[i][j].sType == SQUARE_TYPE::PATH) {
-                    pathShader.use();
-
-                    pathShader.setMat4("projection", projection);
-                    pathShader.setMat4("view",view);
-
-                    pathShader.setVec3("light.position", lightPos);
-                    pathShader.setVec3("viewPos", camera.Position);
-
-                    glm::vec3 lightColor;
-                    lightColor.x = static_cast<float>(sin(glfwGetTime() * 2.0));
-                    lightColor.y = static_cast<float>(sin(glfwGetTime() * 0.7));
-                    lightColor.z = static_cast<float>(sin(glfwGetTime() * 1.3));
-                    glm::vec3 diffuseColor =
-                            lightColor * glm::vec3(0.5f); // decrease the influence
-                    glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f); // low influence
-
-                    pathShader.setVec3("light.ambient", ambientColor);
-                    pathShader.setVec3("light.diffuse", diffuseColor);
-                    pathShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
-
-                    pathShader.setVec3("material.ambient", 1.0f, 0.0f, 1.0f);
-                    pathShader.setVec3("material.diffuse", 1.2f, 1.5f, 1.31f);
-                    pathShader.setVec3("material.specular", 0.5f, 0.5f, 0.5f);
-                    pathShader.setFloat("material.shininess", 64.0f);
-
-                    model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.15f));
-
-                    pathShader.setMat4("model",model);
-                    glDrawArrays(GL_TRIANGLES, 0, 36);
-                    continue;
-                }
-
-                ourShader.use();
                 if(m[i][j].sType == SQUARE_TYPE::BARRIER)
                     model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.15f));
 
@@ -286,6 +244,42 @@ int main() {
 
                 ourShader.setMat4("model", model);
                 glDrawArrays(GL_TRIANGLES, 0, 36);
+
+//                if(m[i][j].sType == SQUARE_TYPE::PATH) {
+//                    pathShader.use();
+//
+//                    pathShader.setMat4("projection", projection);
+//                    pathShader.setMat4("view",view);
+//
+//                    pathShader.setVec3("light.position", lightPos);
+//                    pathShader.setVec3("viewPos", camera.Position);
+//
+//                    glm::vec3 lightColor;
+//                    lightColor.x = static_cast<float>(sin(glfwGetTime() * 2.0));
+//                    lightColor.y = static_cast<float>(sin(glfwGetTime() * 0.7));
+//                    lightColor.z = static_cast<float>(sin(glfwGetTime() * 1.3));
+//                    glm::vec3 diffuseColor =
+//                            lightColor * glm::vec3(0.5f); // decrease the influence
+//                    glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f); // low influence
+//
+//                    pathShader.setVec3("light.ambient", ambientColor);
+//                    pathShader.setVec3("light.diffuse", diffuseColor);
+//                    pathShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
+//
+//                    pathShader.setVec3("material.ambient", 1.0f, 0.0f, 1.0f);
+//                    pathShader.setVec3("material.diffuse", 1.2f, 1.5f, 1.31f);
+//                    pathShader.setVec3("material.specular", 0.5f, 0.5f, 0.5f);
+//                    pathShader.setFloat("material.shininess", 64.0f);
+//
+//                    model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.15f));
+//
+//                    pathShader.setMat4("model",model);
+//                    glDrawArrays(GL_TRIANGLES, 0, 36);
+//                    continue;
+//                }
+
+
+
             }
         }
 
@@ -492,18 +486,21 @@ bool algorithm()
     openList.push(m[startSquare.x][startSquare.y]);
 
     while(!openList.empty()){
+
+        glfwWaitEventsTimeout(5.0);
         Square current = openList.top();
         openList.pop();
 
         ::int32_t i = current.x, j = current.y;
 
         if(i == endSquare.x && j == endSquare.y) {
-            makePath(current.x,current.y);
-            m[endSquare.x][endSquare.y].sType = SQUARE_TYPE::END;
+//            makePath(current.x,current.y);
+//            m[endSquare.x][endSquare.y].sType = SQUARE_TYPE::END;
             return true;
         }
 
         closedList[i][j] = true;
+        m[i][j].sType = SQUARE_TYPE::CLOSED_LIST;
         int tmpGscore = current.gScore + 1;
 
         if (i < 19 && m[i + 1][j].sType != SQUARE_TYPE::BARRIER && !closedList[i + 1][j])      // RIGHT
@@ -519,6 +516,7 @@ bool algorithm()
 
                 cnt++;
                 m[i+1][j].insertionOrder = cnt;
+                m[i+1][j].sType = OPEN_LIST;
                 openList.push(m[i+1][j]);
             }
         }
@@ -536,6 +534,7 @@ bool algorithm()
 
                 cnt++;
                 m[i-1][j].insertionOrder = cnt;
+                m[i-1][j].sType = OPEN_LIST;
                 openList.push(m[i-1][j]);
             }
         }
@@ -552,6 +551,7 @@ bool algorithm()
 
                 cnt++;
                 m[i][j+1].insertionOrder = cnt;
+                m[i][j+1].sType = SQUARE_TYPE::OPEN_LIST;
                 openList.push(m[i][j+1]);
             }
         }
@@ -568,6 +568,7 @@ bool algorithm()
 
                 cnt++;
                 m[i][j-1].insertionOrder = cnt;
+                m[i][j-1].sType = SQUARE_TYPE::OPEN_LIST;
                 openList.push(m[i][j-1]);
             }
         }

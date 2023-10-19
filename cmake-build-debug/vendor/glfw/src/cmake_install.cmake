@@ -1,8 +1,8 @@
-# Install script for directory: C:/Users/Bojana/Desktop/KGproekt/vendor/glfw/src
+# Install script for directory: C:/Users/Bojana/Desktop/Astar algorithm in OpenGL/vendor/glfw/src
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
-  set(CMAKE_INSTALL_PREFIX "C:/Program Files (x86)/KGproekt")
+  set(CMAKE_INSTALL_PREFIX "C:/Program Files (x86)/OpenGLPrj")
 endif()
 string(REGEX REPLACE "/$" "" CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 
@@ -38,6 +38,6 @@ if(NOT DEFINED CMAKE_OBJDUMP)
 endif()
 
 if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" TYPE STATIC_LIBRARY FILES "C:/Users/Bojana/Desktop/KGproekt/cmake-build-debug/vendor/glfw/src/libglfw3.a")
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" TYPE STATIC_LIBRARY FILES "C:/Users/Bojana/Desktop/Astar algorithm in OpenGL/cmake-build-debug/vendor/glfw/src/libglfw3.a")
 endif()
 

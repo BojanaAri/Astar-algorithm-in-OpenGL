@@ -1,7 +1,5 @@
 #version 330 core
 out vec4 FragColor;
-out vec4 Start;
-out vec4 End;
 
 in vec3 Normal;
 in vec3 FragPos;
@@ -10,8 +8,6 @@ uniform vec3 lightPos;
 uniform vec3 viewPos;
 uniform vec3 lightColor;
 
-uniform vec4 colorS;
-uniform vec4 colorE;
 uniform vec3 color;
 
 void main()
@@ -35,7 +31,4 @@ void main()
 
         vec3 result = (ambient + diffuse + specular) * color;
         FragColor = vec4(result, 1.0);
-
-        Start = colorS;
-        End = colorE;
 }
