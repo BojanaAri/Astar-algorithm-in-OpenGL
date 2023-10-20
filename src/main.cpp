@@ -75,7 +75,6 @@ int main() {
         Shader ourShader(shader_location + used_shaders + std::string(".vert"),
                          shader_location + used_shaders + std::string(".frag"));
 
-
     float vertices[] = {
             // positions
             0.06f, 0.06f, 0.0f,        // top right
