@@ -19,11 +19,12 @@ const unsigned int SCR_HEIGHT = 800;
 //                                                 FUNCTIONS
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
-void processInput(GLFWwindow *window);
+void processInput(GLFWwindow *window, Shader shader, unsigned int VAO, unsigned int VBO, unsigned int EBO);
 void makeGrid(::int32_t, ::int32_t);
 int heuristicFunction(const Square& m1, const Square& m2);
 void makePath(::int32_t x, ::int32_t y);
-bool algorithm();
+bool algorithm(GLFWwindow *window, Shader ourShader, unsigned int VAO, unsigned int VBO, unsigned int EBO);
+void draw(GLFWwindow *window, Shader ourShader, unsigned int VAO, unsigned int VBO, unsigned int EBO);
 
 // variables
 int32_t nr, nc, rows = 20, cols = 20;
@@ -68,17 +69,12 @@ int main() {
         return -1;
     }
     //--------------------------------------------------------------------------------------------------
-    //
-    std::string shader_location("../res/shaders/");
+     std::string shader_location("../res/shaders/");
 
-    std::string used_shaders("shader");
-    Shader ourShader(shader_location + used_shaders + std::string(".vert"),
-                     shader_location + used_shaders + std::string(".frag"));
+        std::string used_shaders("shader");
+        Shader ourShader(shader_location + used_shaders + std::string(".vert"),
+                         shader_location + used_shaders + std::string(".frag"));
 
-    ////////////////////////////////////////////////////////////////////////////////////
-
-    // set up vertex data (and buffer(s)) and configure vertex attributes
-    // ------------------------------------------------------------------
 
     float vertices[] = {
             // positions
@@ -111,6 +107,7 @@ int main() {
                           static_cast<void *>(nullptr));
     glEnableVertexAttribArray(0);
 
+
     nr = nc = 8;
     makeGrid(rows,cols);
 
@@ -119,76 +116,13 @@ int main() {
     while (!glfwWindowShouldClose(window)) {
         // input
         // -----
-        processInput(window);
+   processInput(window, ourShader, VAO, VBO, EBO);
 
 
-        // render
-        // ------
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT); // also clear the depth buffer now!
 
-        //| GL_DEPTH_BUFFER_BIT activate shader
-        ourShader.use();
-
-        // create transformations
-        glm::mat4 view = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
-        glm::mat4 projection = glm::mat4(1.0f);
-        projection = glm::perspective(glm::radians(45.0f), (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 100.0f);
-        view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
-
-
-        // pass transformation matrices to the shader
-        ourShader.setMat4("projection",projection); // note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
-        ourShader.setMat4("view", view);
-
-        // render boxes
-        glBindVertexArray(VAO);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-
-
-        for (unsigned int i = 0; i < rows; i++) {
-            for (unsigned int j = 0; j < cols; j++) {
-                glm::mat4 model = glm::mat4(1.0f);
-
-                float xcoord = ((float) m[i][j].x / nr - 1.18f);
-                float ycoord = 2.18-( (float) m[i][j].y / nc + 1.0f);
-
-
-                model = glm::translate(model, glm::vec3(xcoord, ycoord, 0.0f));
-                ourShader.setMat4("model", model);
-
-                glm::vec4 uni;
-                if(m[i][j].sType == SQUARE_TYPE::START) {
-                    int st = glGetUniformLocation(ourShader.ID, "colorS");
-                    uni = m[i][j].color();
-                    glUniform4f(st, uni.x, uni.y, uni.z, uni.w);
-                    start = false;
-                    startSquare = m[i][j];
-                }
-
-                if(m[i][j].sType == SQUARE_TYPE::END) {
-                    int e = glGetUniformLocation(ourShader.ID, "colorE");
-                    uni = m[i][j].color();
-                    glUniform4f(e, uni.x, uni.y, uni.z, uni.w);
-                    End = false;
-                    endSquare = m[i][j];
-                }
-
-                if(m[i][j].sType == SQUARE_TYPE::PATH) {
-                    int e = glGetUniformLocation(ourShader.ID, "open");
-                    uni = m[i][j].color();
-                    glUniform4f(e, uni.x, uni.y, uni.z, uni.w);
-                }
-
-
-                int colorLocation = glGetUniformLocation(ourShader.ID, "color");
-                uni = m[i][j].color();
-                glUniform4f(colorLocation, uni.x , uni.y, uni.z, uni.w);
-
-                glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
-
-            }
-        }
+        draw(window, ourShader, VAO, VBO, EBO);
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved
         // etc.)
@@ -197,16 +131,75 @@ int main() {
         glfwPollEvents();
     }
 
-    // optional: de-allocate all resources once they've outlived their purpose:
-    // ------------------------------------------------------------------------
-    glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &VBO);
-    glDeleteBuffers(1, &EBO);
-
     // glfw: terminate, clearing all previously allocated GLFW resources.
     // ------------------------------------------------------------------
     glfwTerminate();
     return 0;
+}
+
+void draw(GLFWwindow *window, Shader ourShader, unsigned int VAO, unsigned int VBO, unsigned int EBO){
+
+
+    //processInput(window, ourShader, VAO, VBO, EBO);
+
+    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT); // also clear the depth buffer now!
+
+
+    ourShader.use();
+
+    // create transformations
+    glm::mat4 view = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
+    glm::mat4 projection = glm::mat4(1.0f);
+    projection = glm::perspective(glm::radians(45.0f), (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 100.0f);
+    view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+
+
+    // pass transformation matrices to the shader
+    ourShader.setMat4("projection",projection); // note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
+    ourShader.setMat4("view", view);
+
+    // render boxes
+    glBindVertexArray(VAO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+
+
+    for (unsigned int i = 0; i < rows; i++) {
+        for (unsigned int j = 0; j < cols; j++) {
+            glm::mat4 model = glm::mat4(1.0f);
+
+            float xcoord = ((float) m[i][j].x / nr - 1.18f);
+            float ycoord = 2.18-( (float) m[i][j].y / nc + 1.0f);
+
+
+            model = glm::translate(model, glm::vec3(xcoord, ycoord, 0.0f));
+            ourShader.setMat4("model", model);
+
+            glm::vec4 uni;
+            if(m[i][j].sType == SQUARE_TYPE::START) {
+                start = false;
+                startSquare = m[i][j];
+            }
+
+            if(m[i][j].sType == SQUARE_TYPE::END) {
+                End = false;
+                endSquare = m[i][j];
+            }
+
+            if(m[i][j].sType == SQUARE_TYPE::PATH) {
+                int e = glGetUniformLocation(ourShader.ID, "open");
+                uni = m[i][j].color();
+                glUniform4f(e, uni.x, uni.y, uni.z, uni.w);
+            }
+
+
+            int colorLocation = glGetUniformLocation(ourShader.ID, "color");
+            uni = m[i][j].color();
+            glUniform4f(colorLocation, uni.x , uni.y, uni.z, uni.w);
+
+            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+        }
+    }
 }
 
 
@@ -214,7 +207,7 @@ int main() {
 // frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------
 
-void processInput(GLFWwindow *window) {
+void processInput(GLFWwindow *window, Shader ourShader, unsigned int VAO, unsigned int VBO, unsigned int EBO) {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
     double xpos, ypos;
@@ -256,7 +249,7 @@ void processInput(GLFWwindow *window) {
     int startAlgorithm = glfwGetKey(window, GLFW_KEY_SPACE);
     if (startAlgorithm == GLFW_PRESS && !start && !End)
     {
-        algorithm();
+        algorithm(window,ourShader,VAO,VBO,EBO);
     }
     else if (startAlgorithm == GLFW_PRESS){
         cout<<"Add start and end position"<<endl;
@@ -316,7 +309,7 @@ void makePath(::int32_t x, ::int32_t y)
 }
 
 int cnt = 0;
-bool algorithm()
+bool algorithm(GLFWwindow *window, Shader ourShader, unsigned int VAO, unsigned int VBO, unsigned int EBO)
 {
     bool closedList[20][20] = {{false}};
 
@@ -408,6 +401,7 @@ bool algorithm()
                 openList.push(m[i][j-1]);
             }
         }
+        draw(window, ourShader, VAO,VBO,EBO);
     }
 
     return false;
