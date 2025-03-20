@@ -1,18 +1,18 @@
-# A-Star-algorithm-in-OpenGL
-Implementation of the A star search algorithm using C++ and OpenGL.
--- Project for the course Computer Graphics in FINKI.
+# A* Algorithm in OpenGL  
 
-The program starts with a white grid.
-When the program is running - first LEFT mouse click (yellow square) is the - starting point, 
-second LEFT mouse click (blue square) is the - ending point,
-the following LEFT mouse clicks - barrier(s).
-If a black barrier square is clicked with the RIGHT mouse button - it deletes the barrier(square).
+An implementation of the A* search algorithm using C++ and OpenGL.  
+This project was developed for the *Computer Graphics* course at FINKI.  
 
-WHEN clicked SPACE - the algorithm starts & finds the shortest path from the starting to the ending point.
+## How It Works  
+- The program starts with a blank white grid.  
+- **Left Mouse Clicks:**  
+  - First click (Yellow square) → Sets the starting point.  
+  - Second click (Blue square) → Sets the ending point.  
+  - Subsequent clicks → Add barriers (Black squares).  
+- **Right Mouse Click:** Removes a previously placed barrier.  
+- **Spacebar:** Runs the A* algorithm to find the shortest path.  
+- **Enter:** Resets the grid.  
 
-WHEN clicked ENTER - it restarts the grid.
-
-
-----2D : https://github.com/BojanaAri/Astar-algorithm-in-OpenGL/tree/2D
-
-----3D: https://github.com/BojanaAri/Astar-algorithm-in-OpenGL/tree/3D
+## Versions  
+- **[2D Version](https://github.com/BojanaAri/Astar-algorithm-in-OpenGL/tree/2D)**  
+- **[3D Version](https://github.com/BojanaAri/Astar-algorithm-in-OpenGL/tree/3D)**  
